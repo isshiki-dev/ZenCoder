@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  title     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String          @id @default(cuid())
+  conversationId String
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String          // 'user', 'assistant', 'system', 'tool'
+  content        String
+  createdAt      DateTime        @default(now())
+  toolExecutions ToolExecution[]
+}
+
+model ToolExecution {
+  id         String   @id @default(cuid())
+  messageId  String
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  toolName   String
+  input      String   // JSON string
+  output     String?  // JSON string
+  status     String   // 'pending', 'success', 'error'
+  error      String?
+  duration   Int?     // ms
+  createdAt  DateTime @default(now())
+}
+
+model Tool {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  parameters  String   // JSON schema as string
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
